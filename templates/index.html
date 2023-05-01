@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>Wireless Networks</title>
+  <style>
+    body {
+      background-color: #f5f7f9;
+      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    }
+
+    .container {
+      max-width: 90%;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      color: #3e3f42;
+      text-align: center;
+      margin-top: 0;
+      font-size: 36px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    ul {
+      list-style-type: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    li {
+      background-color: #ffffff;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .ssid {
+      font-size: 22px;
+      color: #3e3f42;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .mac {
+      font-size: 16px;
+      color: #7f7f7f;
+    }
+
+    .options {
+      display: flex;
+      align-items: center;
+    }
+
+    .option {
+      background-color: #3e3f42;
+      border: none;
+      color: #ffffff;
+      padding: 10px;
+      border-radius: 5px;
+      margin-right: 10px;
+      cursor: pointer;
+      font-size: 16px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      transition: background-color 0.2s ease-in-out;
+    }
+
+    .option:hover {
+      background-color: #2b2c2f;
+    }
+
+    #myModal {
+      display: none;
+      position: fixed;
+      z-index: 1;
+      padding-top: 100px;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgb(0, 0, 0);
+      background-color: rgba(0, 0, 0, 0.4);
+    }
+
+    .modal-content {
+      background-color: #fefefe;
+      margin: auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 80%;
+    }
+
+    #savedPasswordsButton {
+      background-color: #2196F3;
+      /* background-color: #4CAF50; */
+      color: white;
+      padding: 10px 20px;
+      border-radius: 5px;
+      border: none;
+      margin-left: 10px;
+      cursor: pointer;
+
+    }
+
+    #savedHandshakesButton {
+      background-color: #f44336;
+      /* background-color: #4CAF50; */
+      color: white;
+      padding: 10px 20px;
+      border-radius: 5px;
+      border: none;
+      margin-left: 10px;
+      cursor: pointer;
+    }
+
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+
+    .popup {
+      background-color: white;
+      padding: 20px;
+      width: 75%;
+      border-radius: 5px;
+      box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.5);
+      margin: auto;
+    }
+
+    table {
+      margin: 0 auto;
+    }
+
+    td {
+      padding: 10px;
+      width: 30%;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Wireless Network Cracker</h1>
+    <div class="buttons" style="  display: flex;
+    justify-content: center;
+    align-items: center; margin-bottom: 20px;">
+      <button id="savedPasswordsButton">Saved Passwords</button>
+      <button id="savedHandshakesButton">Saved Handshakes</button>
+    </div>
+
+    <div class="overlay" id="overlay" style="display: none;">
+      <div class="popup">
+        <h2>Popup Title</h2>
+        <p>Popup content goes here.</p>
+        <button onclick="hidePopup()">Close</button>
+      </div>
+    </div>
+
+    <ul>
+      {% for ssid, mac in ssids.items() %}
+      <li>
+        <div class="ssid">{{ ssid }}</div>
+        <div class="mac">{{ mac }}</div>
+        <div class="options">
+          <form method="post" action="#">
+            <input type="hidden" name="ssid" value="{{ ssid }}">
+            <input type="hidden" name="mac" value="{{ mac }}">
+            <button class="option crack-button" name="option" value="1">Crack</button>
+            <button class="option handshake-button" name="option" value="2">Handshake</button>
+          </form>
+          <div id="result" style="display:none; padding: 10px; border-radius: 5px;  background-color: #fff;
+          box-shadow: 0 2px 5px rgba(5, 254, 97, 0.2);
+          border: 1px solid #333;" class="result-box"></div>
+        </div>
+
+        <div id="myModal" class="modal">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h2>Loading...</h2>
+            </div>
+            <div class="modal-body">
+              <p>Please wait while the server processes your request.</p>
+            </div>
+          </div>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  <script>
+    const crackButtons = document.querySelectorAll('.crack-button');
+    const handshakeButtons = document.querySelectorAll('.handshake-button');
+
+    function toggleButtonsDisabledState(disabledState) {
+      crackButtons.forEach(button => {
+        if (button.style.display != 'none') { button.style.display == disabledState ? 'none' : 'block'; }
+
+      });
+      handshakeButtons.forEach(button => {
+        if (button.style.display != 'none') { button.style.display == disabledState ? 'none' : 'block'; }
+      });
+    }
+
+    function toggleLoadingIndicator(buttonElement) {
+      const loadingIndicator = buttonElement.parentNode.parentNode.nextElementSibling;
+      const modal = document.getElementById("myModal");
+      modal.style.display = "block";
+      if (loadingIndicator) {
+        loadingIndicator.style.display = 'block';
+      }
+    }
+
+    function hideLoadingIndicator(buttonElement) {
+      const loadingIndicator = buttonElement.parentNode.parentNode.nextElementSibling;
+      const modal = document.getElementById("myModal");
+      modal.style.display = "none";
+      if (loadingIndicator) {
+        loadingIndicator.style.display = 'none';
+      }
+    }
+
+
+    crackButtons.forEach(button => {
+      button.addEventListener('click', (event) => {
+        event.preventDefault();
+        toggleButtonsDisabledState(true);
+        toggleLoadingIndicator(button);
+        fetch(`/crack_wifi?ssid=${button.parentNode.querySelector('[name="ssid"]').value}`)
+          .then(response => response.json())
+          .then(data => {
+            console.log(data);
+            hideLoadingIndicator(button);
+            const resultBox = button.parentNode.nextElementSibling;
+            resultBox.style.display = 'block';
+            resultBox.style.backgroundColor = 'rgba(5, 254, 97, 0.733)';
+            resultBox.innerHTML = 'password: ' + JSON.stringify(data['ssid']);
+            toggleButtonsDisabledState(false);
+            button.style.display = 'none';
+          });
+      });
+    });
+
+    handshakeButtons.forEach(button => {
+      button.addEventListener('click', (event) => {
+        event.preventDefault();
+        toggleButtonsDisabledState(true);
+        toggleLoadingIndicator(button);
+        fetch(`/handshake?ssid=${button.parentNode.querySelector('[name="ssid"]').value}&mac=${button.parentNode.querySelector('[name="mac"]').value}`)
+          .then(response => response.json())
+          .then(data => {
+            console.log(data);
+            hideLoadingIndicator(button);
+            const resultBox = button.parentNode.nextElementSibling;
+            resultBox.style.display = 'block';
+            resultBox.style.backgroundColor = 'rgba(5, 254, 97, 0.733)';
+            resultBox.innerHTML = 'handshake: ' + JSON.stringify(data['handshake']);
+            toggleButtonsDisabledState(false);
+            button.style.display = 'none';
+          });
+      });
+    });
+
+    const savedPasswordsButton = document.getElementById('savedPasswordsButton');
+    const savedHandshakesButton = document.getElementById('savedHandshakesButton');
+
+    savedPasswordsButton.addEventListener('click', () => {
+      fetch('/saved_passwords')
+        .then(response => response.json())
+        .then(data => { showPopup('Saved Passwords', data) })
+        .catch(error => console.error(error));
+    });
+
+    savedHandshakesButton.addEventListener('click', () => {
+      fetch('/saved_handshakes')
+        .then(response => response.json())
+        .then(data => { showPopup('Saved Handshakes', data) })
+        .catch(error => console.error(error));
+    });
+
+    function showPopup(title, data) {
+      console.log(data);
+      const overlay = document.getElementById('overlay');
+      const table = document.createElement('table');
+      const tableHead = document.createElement('thead');
+      const tableBody = document.createElement('tbody');
+      const tableHeaderRow = document.createElement('tr');
+      const ssidHeader = document.createElement('th');
+      const passwordHeader = document.createElement('th');
+      ssidHeader.textContent = 'SSID';
+      passwordHeader.textContent = title.split(' ')[1];
+      ssidHeader.style.border = '1px solid black';
+      ssidHeader.style.padding = '10px';
+      passwordHeader.style.padding = '10px';
+      ssidHeader.style.textAlign = 'center';
+      passwordHeader.style.border = '1px solid black';
+      passwordHeader.style.textAlign = 'center';
+      tableHeaderRow.appendChild(ssidHeader);
+      tableHeaderRow.appendChild(passwordHeader);
+      tableHead.appendChild(tableHeaderRow);
+      data.forEach(entry => {
+        const tableRow = document.createElement('tr');
+        const ssidCell = document.createElement('td');
+        const passwordCell = document.createElement('td');
+        ssidCell.style.border = '1px solid black';
+        ssidCell.style.textAlign = 'center';
+
+        ssidCell.textContent = entry[1];
+        passwordCell.textContent = entry[2];
+        tableRow.appendChild(ssidCell);
+        passwordCell.style.border = '1px solid black';
+        passwordCell.style.textAlign = 'center';
+        tableRow.appendChild(passwordCell);
+        tableBody.appendChild(tableRow);
+      });
+      table.appendChild(tableHead);
+      table.appendChild(tableBody);
+      overlay.querySelector('p').innerHTML = '';
+      overlay.querySelector('p').appendChild(table);
+      overlay.querySelector('h2').textContent = title;
+      overlay.querySelector('h2').style = 'text-align: center;';
+      overlay.style.display = 'flex';
+    }
+
+
+    function hidePopup() {
+      const overlay = document.getElementById('overlay');
+      overlay.style.display = 'none';
+    }
+
+  </script>
+</body>
