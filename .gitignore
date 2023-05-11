@@ -3,5 +3,7 @@ venv/
 __pycache__/
 **__pycache__**
 .vscode
+*.cap
+besside.log
 wifi_database.db
 ```

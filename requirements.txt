@@ -2,3 +2,4 @@ Flask
 db-sqlite3
 flask-restful
 wifi
+flask_swagger_ui
